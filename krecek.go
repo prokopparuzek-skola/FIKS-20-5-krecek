@@ -82,26 +82,42 @@ func makeDistances(maps []string, h, w int) (distances [][][]int) {
 func main() {
 	var Q, F, h, w int
 	var maps []string
+	var distances [][][]int
 
 	fmt.Scan(&Q, &F, &h, &w)
 	maps = make([]string, F)
-	for i := 0; i < F; i++ {
+	for i := 0; i < F; i++ { // load map
 		for j := 0; j < h; j++ {
 			var tmp string
 			fmt.Scan(&tmp)
 			maps[i] += tmp
 		}
 	}
-	distances := makeDistances(maps, h, w)
-	for i := 0; i < Q; i++ {
+	distances = makeDistances(maps, h, w) // compute distances matrix
+	for i := 0; i < Q; i++ {              // load questions
 		var floors []*[][]int
 		var floorsC int
+		var staredFloors int
+		var stars [][]int
+
 		fmt.Scan(&floorsC)
 		floors = make([]*[][]int, floorsC)
-		for j := 0; j < floorsC; j++ {
+		for j := 0; j < floorsC; j++ { // load floors sequence
 			var f int
 			fmt.Scan(&f)
 			floors = append(floors, &distances[f])
+		}
+
+		fmt.Scan(&staredFloors)
+		stars = make([][]int, staredFloors)
+		for j := 0; j < staredFloors; j++ { // load stars
+			var startsCount int
+			fmt.Scan(&startsCount)
+			for k := 0; k < startsCount; k++ {
+				var x, y int
+				fmt.Scan(&y, &x)
+				stars[j] = append(stars[j], y*w+x)
+			}
 		}
 	}
 }
