@@ -99,13 +99,18 @@ func main() {
 		var floorsC int
 		var staredFloors int
 		var stars [][]int
+		var pocetKrecku int
+		var krecci [][]int
+		var mapTofloor map[int]int
 
 		fmt.Scan(&floorsC)
 		floors = make([]*[][]int, floorsC)
+		mapTofloor = make(map[int]int)
 		for j := 0; j < floorsC; j++ { // load floors sequence
 			var f int
 			fmt.Scan(&f)
-			floors = append(floors, &distances[f])
+			floors[j] = &distances[f]
+			mapTofloor[f] = j
 		}
 
 		fmt.Scan(&staredFloors)
@@ -118,6 +123,14 @@ func main() {
 				fmt.Scan(&y, &x)
 				stars[j] = append(stars[j], y*w+x)
 			}
+		}
+
+		fmt.Scan(&pocetKrecku)
+		krecci = make([][]int, floorsC)
+		for j := 0; j < pocetKrecku; j++ { // load krecky
+			var floor, x, y int
+			fmt.Scan(&floor, &y, &x)
+			krecci[mapTofloor[floor]] = append(krecci[mapTofloor[floor]], y*w+x)
 		}
 	}
 }
