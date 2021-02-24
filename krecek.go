@@ -93,5 +93,15 @@ func main() {
 		}
 	}
 	distances := makeDistances(maps, h, w)
-	fmt.Println(distances)
+	for i := 0; i < Q; i++ {
+		var floors []*[][]int
+		var floorsC int
+		fmt.Scan(&floorsC)
+		floors = make([]*[][]int, floorsC)
+		for j := 0; j < floorsC; j++ {
+			var f int
+			fmt.Scan(&f)
+			floors = append(floors, &distances[f])
+		}
+	}
 }
