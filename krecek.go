@@ -36,9 +36,9 @@ func canGo(m string, pos int, h, w int) (can []int) {
 }
 
 func min(orig, a, b int) int {
-	if a == 0 || b == 0 {
+	if a == -1 || b == -1 {
 		return orig
-	} else if orig == 0 {
+	} else if orig == -1 {
 		return a + b
 	} else if orig > (a + b) {
 		return a + b
@@ -56,7 +56,7 @@ func FW(matrix [][]int) [][]int {
 		}
 	}
 	for i := 0; i < len(matrix); i++ {
-		matrix[i][i] = -1
+		matrix[i][i] = 0
 	}
 	return matrix
 }
@@ -67,6 +67,9 @@ func makeDistances(maps []string, h, w int) (distances [][][]int) {
 		distances[i] = make([][]int, len(m))
 		for j, _ := range distances[i] {
 			distances[i][j] = make([]int, len(m))
+			for k := range distances[i][j] { // init by -1
+				distances[i][j][k] = -1
+			}
 		}
 		for j, _ := range distances[i] {
 			can := canGo(m, j, h, w)
@@ -77,6 +80,113 @@ func makeDistances(maps []string, h, w int) (distances [][][]int) {
 		distances[i] = FW(distances[i])
 	}
 	return
+}
+
+func shortestWay(floor [][]int, start, end, last, stepsBefore int) int {
+	if stepsBefore == -1 || floor[start][end] == -1 {
+		return -1
+	}
+	if last == -1 {
+		return floor[start][end] + stepsBefore
+	} else {
+		if last < floor[start][end]+stepsBefore {
+			return last
+		} else {
+			return floor[start][end] + stepsBefore
+		}
+	}
+}
+
+func wayDown(maze []*[][]int, stairs [][]int, krecek, floor, lowestKrecek, w, h int) []int {
+	var AFloor, FFloor []int
+
+	if floor == lowestKrecek { // at lowest floor
+		AFloor = make([]int, len(stairs[floor-1]))
+		for i, e := range stairs[floor-1] {
+			AFloor[i] = (*maze[floor])[krecek][e]
+		}
+		return AFloor
+	}
+
+	AFloor = make([]int, len(stairs[floor])) // goto stairs
+	for i, e := range stairs[floor] {
+		AFloor[i] = (*maze[floor])[krecek][e]
+		if AFloor[i] != -1 {
+			AFloor[i]++
+		}
+	}
+
+	for floorNum := range stairs[floor : lowestKrecek-1] {
+		f := floorNum + floor
+		FFloor = make([]int, len(stairs[f+1]))
+		for i := range FFloor {
+			FFloor[i] = -1
+		}
+		for i, start := range stairs[f] {
+			for j, end := range stairs[f+1] {
+				FFloor[j] = shortestWay(*maze[f+1], start, end, FFloor[j], AFloor[i])
+			}
+		}
+		for i := range FFloor {
+			if FFloor[i] != -1 {
+				FFloor[i]++
+			}
+		}
+		AFloor = FFloor
+	}
+	return AFloor
+}
+
+func saveKrecky(maze []*[][]int, stairs [][]int, krecci [][]int, lowestKrecek, w, h int) int {
+	var whenArrive [][]int
+	var krecek int
+	var minDistance int = -1
+	whenArrive = make([][]int, len(krecci))
+	for i := range whenArrive {
+		whenArrive[i] = make([]int, len(stairs[lowestKrecek-1])+len(krecci[lowestKrecek]))
+		for j := range whenArrive[i] {
+			whenArrive[i][j] = -1
+		}
+	}
+
+	for f, KFloor := range krecci {
+		for _, k := range KFloor {
+			arrive := wayDown(maze, stairs, k, f, lowestKrecek, w, h)
+			for i, w := range arrive {
+				if w != -1 {
+					for j := range stairs[lowestKrecek-1] { // try go to stairs
+						whenArrive[krecek][j] = shortestWay(*maze[lowestKrecek], stairs[lowestKrecek-1][i], stairs[lowestKrecek-1][j], min(arrive[j], whenArrive[krecek][j], 0), w)
+					}
+					for j := range krecci[lowestKrecek] { // goto krecek
+						whenArrive[krecek][j+len(krecci[lowestKrecek])] = shortestWay(*maze[lowestKrecek], stairs[lowestKrecek-1][i], krecci[lowestKrecek][j], whenArrive[krecek][j+len(stairs[lowestKrecek-1])], w)
+					}
+				}
+			}
+			krecek++
+		}
+	}
+	for i := 0; i < len(whenArrive[0]); i++ { // find shortest way
+		var sum int = -1
+		for j := 0; j < len(whenArrive); j++ {
+			if whenArrive[j][i] == -1 {
+				sum = -1
+				break
+			} else {
+				switch sum {
+				case -1:
+					sum = whenArrive[j][i]
+				default:
+					sum += whenArrive[j][i]
+				}
+			}
+		}
+		if sum != -1 {
+			if sum < minDistance || minDistance == -1 {
+				minDistance = sum
+			}
+		}
+	}
+	return minDistance
 }
 
 func main() {
@@ -98,7 +208,7 @@ func main() {
 		var floors []*[][]int
 		var floorsC int
 		var staredFloors int
-		var stars [][]int
+		var stairs [][]int
 		var pocetKrecku int
 		var krecci [][]int
 		var mapTofloor map[int]int
@@ -115,14 +225,14 @@ func main() {
 		}
 
 		fmt.Scan(&staredFloors)
-		stars = make([][]int, staredFloors)
-		for j := 0; j < staredFloors; j++ { // load stars
+		stairs = make([][]int, staredFloors)
+		for j := 0; j < staredFloors; j++ { // load stairs
 			var startsCount int
 			fmt.Scan(&startsCount)
 			for k := 0; k < startsCount; k++ {
 				var x, y int
 				fmt.Scan(&y, &x)
-				stars[j] = append(stars[j], y*w+x)
+				stairs[j] = append(stairs[j], y*w+x)
 			}
 		}
 
@@ -135,6 +245,12 @@ func main() {
 			if lowestKrecek < mapTofloor[floor] { // ktery krecek je nejnize
 				lowestKrecek = mapTofloor[floor]
 			}
+		}
+		distances := saveKrecky(floors, stairs, krecci, lowestKrecek, w, h)
+		if distances == -1 {
+			fmt.Println("social distancing")
+		} else {
+			fmt.Println(distances)
 		}
 	}
 }
