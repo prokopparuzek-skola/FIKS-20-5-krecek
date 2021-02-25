@@ -156,7 +156,7 @@ func saveKrecky(maze []*[][]int, stairs [][]int, krecci [][]int, lowestKrecek, p
 						whenArrive[krecek][j] = shortestWay(*maze[lowestKrecek], stairs[lowestKrecek-1][i], stairs[lowestKrecek-1][j], min(arrive[j], whenArrive[krecek][j], 0), w)
 					}
 					for j := range krecci[lowestKrecek] { // goto krecek
-						whenArrive[krecek][j+len(krecci[lowestKrecek])] = shortestWay(*maze[lowestKrecek], stairs[lowestKrecek-1][i], krecci[lowestKrecek][j], whenArrive[krecek][j+len(stairs[lowestKrecek-1])], w)
+						whenArrive[krecek][j+len(stairs[lowestKrecek-1])] = shortestWay(*maze[lowestKrecek], stairs[lowestKrecek-1][i], krecci[lowestKrecek][j], whenArrive[krecek][j+len(stairs[lowestKrecek-1])], w)
 					}
 				}
 			}
