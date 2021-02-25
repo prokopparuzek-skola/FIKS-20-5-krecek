@@ -84,20 +84,17 @@ func makeDistances(maps []string, h, w int) (distances [][][]int) {
 
 func shortestWay(floor [][]int, start, end, last, stepsBefore int) int {
 	if stepsBefore == -1 || floor[start][end] == -1 {
-		return -1
-	}
-	if last == -1 {
+		return last
+	} else if last == -1 {
 		return floor[start][end] + stepsBefore
+	} else if last < floor[start][end]+stepsBefore {
+		return last
 	} else {
-		if last < floor[start][end]+stepsBefore {
-			return last
-		} else {
-			return floor[start][end] + stepsBefore
-		}
+		return floor[start][end] + stepsBefore
 	}
 }
 
-func wayDown(maze []*[][]int, stairs [][]int, krecek, floor, lowestKrecek, w, h int) []int {
+func wayDown(maze []*[][]int, stairs [][]int, krecek, floor, lowestKrecek int) []int {
 	var AFloor, FFloor []int
 
 	if floor == lowestKrecek { // at lowest floor
@@ -119,7 +116,7 @@ func wayDown(maze []*[][]int, stairs [][]int, krecek, floor, lowestKrecek, w, h 
 	for floorNum := range stairs[floor : lowestKrecek-1] {
 		f := floorNum + floor
 		FFloor = make([]int, len(stairs[f+1]))
-		for i := range FFloor {
+		for i := range FFloor { // init FFloor by -1
 			FFloor[i] = -1
 		}
 		for i, start := range stairs[f] {
@@ -137,11 +134,11 @@ func wayDown(maze []*[][]int, stairs [][]int, krecek, floor, lowestKrecek, w, h 
 	return AFloor
 }
 
-func saveKrecky(maze []*[][]int, stairs [][]int, krecci [][]int, lowestKrecek, w, h int) int {
+func saveKrecky(maze []*[][]int, stairs [][]int, krecci [][]int, lowestKrecek, pocetKrecku int) int {
 	var whenArrive [][]int
 	var krecek int
 	var minDistance int = -1
-	whenArrive = make([][]int, len(krecci))
+	whenArrive = make([][]int, pocetKrecku)
 	for i := range whenArrive {
 		whenArrive[i] = make([]int, len(stairs[lowestKrecek-1])+len(krecci[lowestKrecek]))
 		for j := range whenArrive[i] {
@@ -151,7 +148,8 @@ func saveKrecky(maze []*[][]int, stairs [][]int, krecci [][]int, lowestKrecek, w
 
 	for f, KFloor := range krecci {
 		for _, k := range KFloor {
-			arrive := wayDown(maze, stairs, k, f, lowestKrecek, w, h)
+			arrive := wayDown(maze, stairs, k, f, lowestKrecek)
+			//fmt.Println(arrive)
 			for i, w := range arrive {
 				if w != -1 {
 					for j := range stairs[lowestKrecek-1] { // try go to stairs
@@ -165,6 +163,7 @@ func saveKrecky(maze []*[][]int, stairs [][]int, krecci [][]int, lowestKrecek, w
 			krecek++
 		}
 	}
+	//fmt.Println(whenArrive)
 	for i := 0; i < len(whenArrive[0]); i++ { // find shortest way
 		var sum int = -1
 		for j := 0; j < len(whenArrive); j++ {
@@ -180,10 +179,8 @@ func saveKrecky(maze []*[][]int, stairs [][]int, krecci [][]int, lowestKrecek, w
 				}
 			}
 		}
-		if sum != -1 {
-			if sum < minDistance || minDistance == -1 {
-				minDistance = sum
-			}
+		if sum != -1 && (sum < minDistance || minDistance == -1) {
+			minDistance = sum
 		}
 	}
 	return minDistance
@@ -246,7 +243,7 @@ func main() {
 				lowestKrecek = mapTofloor[floor]
 			}
 		}
-		distances := saveKrecky(floors, stairs, krecci, lowestKrecek, w, h)
+		distances := saveKrecky(floors, stairs, krecci, lowestKrecek, pocetKrecku)
 		if distances == -1 {
 			fmt.Println("social distancing")
 		} else {
