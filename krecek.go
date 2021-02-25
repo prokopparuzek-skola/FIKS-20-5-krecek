@@ -102,6 +102,7 @@ func main() {
 		var pocetKrecku int
 		var krecci [][]int
 		var mapTofloor map[int]int
+		var lowestKrecek int
 
 		fmt.Scan(&floorsC)
 		floors = make([]*[][]int, floorsC)
@@ -110,7 +111,7 @@ func main() {
 			var f int
 			fmt.Scan(&f)
 			floors[j] = &distances[f]
-			mapTofloor[f] = j
+			mapTofloor[f] = j // puvodni cislo podlazi na cislo v dotazu
 		}
 
 		fmt.Scan(&staredFloors)
@@ -131,6 +132,9 @@ func main() {
 			var floor, x, y int
 			fmt.Scan(&floor, &y, &x)
 			krecci[mapTofloor[floor]] = append(krecci[mapTofloor[floor]], y*w+x)
+			if lowestKrecek < mapTofloor[floor] { // ktery krecek je nejnize
+				lowestKrecek = mapTofloor[floor]
+			}
 		}
 	}
 }
