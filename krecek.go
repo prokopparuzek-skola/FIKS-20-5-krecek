@@ -47,7 +47,7 @@ func min(orig, a, b int) int {
 	}
 }
 
-func FW(matrix [][]int) [][]int {
+func FW(matrix [][]int) {
 	for k := 0; k < len(matrix); k++ {
 		for i := 0; i < len(matrix); i++ {
 			for j := 0; j < len(matrix); j++ {
@@ -58,26 +58,25 @@ func FW(matrix [][]int) [][]int {
 	for i := 0; i < len(matrix); i++ {
 		matrix[i][i] = 0
 	}
-	return matrix
 }
 
 func makeDistances(maps []string, h, w int) (distances [][][]int) {
 	distances = make([][][]int, len(maps))
 	for i, m := range maps {
 		distances[i] = make([][]int, len(m))
-		for j, _ := range distances[i] {
+		for j := range distances[i] {
 			distances[i][j] = make([]int, len(m))
 			for k := range distances[i][j] { // init by -1
 				distances[i][j][k] = -1
 			}
 		}
-		for j, _ := range distances[i] {
+		for j := range distances[i] {
 			can := canGo(m, j, h, w)
 			for _, c := range can {
 				distances[i][j][c] = 1
 			}
 		}
-		distances[i] = FW(distances[i])
+		FW(distances[i])
 	}
 	return
 }
@@ -114,12 +113,19 @@ func wayDown(maze []*[][]int, stairs [][]int, krecek, floor, lowestKrecek int) [
 	}
 
 	for floorNum := range stairs[floor : lowestKrecek-1] {
+		fmt.Println(AFloor)
 		f := floorNum + floor
 		FFloor = make([]int, len(stairs[f+1]))
 		for i := range FFloor { // init FFloor by -1
 			FFloor[i] = -1
 		}
-		for i, start := range stairs[f] {
+		fmt.Println("maze:", f+1, stairs[f][0], (*maze[f+1])[stairs[f][0]])
+		for i, start := range stairs[f] { // try goto stairs in lower floor
+			for j, end := range stairs[f] {
+				AFloor[j] = shortestWay(*maze[f+1], start, end, AFloor[j], AFloor[i])
+			}
+		}
+		for i, start := range stairs[f] { // go to stairs down
 			for j, end := range stairs[f+1] {
 				FFloor[j] = shortestWay(*maze[f+1], start, end, FFloor[j], AFloor[i])
 			}
@@ -130,6 +136,7 @@ func wayDown(maze []*[][]int, stairs [][]int, krecek, floor, lowestKrecek int) [
 			}
 		}
 		AFloor = FFloor
+		fmt.Println(AFloor)
 	}
 	return AFloor
 }
