@@ -90,15 +90,15 @@ func shortestWay(floor [][]int, start, end, last, stepsBefore int) int {
 	}
 }
 
-func wayDown(maze []*[][]int, stairs [][]int, krecek, floor, lowestKrecek int) []int {
+func wayDown(maze []*[][]int, stairs [][]int, krecek, floor, lowestKrecek int) (out [][]int) {
 	var AFloor, FFloor []int
 
-	if floor == lowestKrecek { // at lowest floor
-		AFloor = make([]int, len(stairs[floor-1]))
-		for i, e := range stairs[floor-1] {
-			AFloor[i] = (*maze[floor])[krecek][e]
+	if floor == len(maze)-1 { // at lowest floor
+		AFloor = make([]int, len(*maze[0]))
+		for i := range *maze[0] {
+			AFloor[i] = (*maze[floor])[krecek][i]
 		}
-		return AFloor
+		return [][]int{AFloor}
 	}
 
 	AFloor = make([]int, len(stairs[floor])) // goto stairs
@@ -109,14 +109,13 @@ func wayDown(maze []*[][]int, stairs [][]int, krecek, floor, lowestKrecek int) [
 		}
 	}
 
-	for floorNum := range stairs[floor : lowestKrecek-1] {
-		fmt.Println(AFloor)
+	for floorNum := range stairs[floor : len(stairs)-1] {
+		//fmt.Println("floor:", AFloor)
 		f := floorNum + floor
 		FFloor = make([]int, len(stairs[f+1]))
 		for i := range FFloor { // init FFloor by -1
 			FFloor[i] = -1
 		}
-		fmt.Println("maze:", f+1, stairs[f][0], (*maze[f+1])[stairs[f][0]])
 		for i, start := range stairs[f] { // try goto stairs in lower floor
 			for j, end := range stairs[f] {
 				AFloor[j] = shortestWay(*maze[f+1], start, end, AFloor[j], AFloor[i])
@@ -133,9 +132,23 @@ func wayDown(maze []*[][]int, stairs [][]int, krecek, floor, lowestKrecek int) [
 			}
 		}
 		AFloor = FFloor
-		fmt.Println(AFloor)
+		if f >= lowestKrecek {
+			out = append(out, AFloor)
+		}
+		//fmt.Println(AFloor)
 	}
-	return AFloor
+	FFloor = make([]int, len(*maze[0]))
+	for i := range FFloor { // init FFloor by -1
+		FFloor[i] = -1
+	}
+	for i, s := range AFloor {
+		for j := range FFloor {
+			FFloor[j] = shortestWay(*maze[len(maze)-1], stairs[len(stairs)-1][i], j, FFloor[j], s)
+		}
+	}
+	out = append(out, FFloor)
+	//fmt.Println(out)
+	return
 }
 
 func saveKrecky(maze []*[][]int, stairs [][]int, krecci [][]int, lowestKrecek, pocetKrecku int) int {
@@ -143,34 +156,14 @@ func saveKrecky(maze []*[][]int, stairs [][]int, krecci [][]int, lowestKrecek, p
 	var krecek int
 	var minDistance int = -1
 	whenArrive = make([][]int, pocetKrecku)
-	for i := range whenArrive {
-		whenArrive[i] = make([]int, len(stairs[lowestKrecek-1])+len(krecci[lowestKrecek]))
-		for j := range whenArrive[i] {
-			whenArrive[i][j] = -1
-		}
-	}
 
 	for f, KFloor := range krecci {
 		for _, k := range KFloor {
 			arrive := wayDown(maze, stairs, k, f, lowestKrecek)
 			//fmt.Println(arrive)
-			if f != lowestKrecek { // normal floor
-				for i, w := range arrive {
-					if w != -1 {
-						for j := range stairs[lowestKrecek-1] { // try go to stairs
-							whenArrive[krecek][j] = shortestWay(*maze[lowestKrecek], stairs[lowestKrecek-1][i], stairs[lowestKrecek-1][j], min(arrive[j], whenArrive[krecek][j], 0), w)
-						}
-						for j := range krecci[lowestKrecek] { // goto krecek
-							whenArrive[krecek][j+len(stairs[lowestKrecek-1])] = shortestWay(*maze[lowestKrecek], stairs[lowestKrecek-1][i], krecci[lowestKrecek][j], whenArrive[krecek][j+len(stairs[lowestKrecek-1])], w)
-						}
-					}
-				}
-			} else { // lowest floor
-				for j, w := range arrive {
-					whenArrive[krecek][j] = w
-				}
-				for j := range krecci[lowestKrecek] { // goto krecek
-					whenArrive[krecek][j+len(stairs[lowestKrecek-1])] = shortestWay(*maze[lowestKrecek], k, krecci[lowestKrecek][j], whenArrive[krecek][j+len(stairs[lowestKrecek-1])], 0)
+			for _, patro := range arrive {
+				for _, a := range patro {
+					whenArrive[krecek] = append(whenArrive[krecek], a)
 				}
 			}
 			krecek++
@@ -213,6 +206,22 @@ func main() {
 			maps[i] += tmp
 		}
 	}
+	/*
+		for i, c := range maps[14] {
+			if i == 299 {
+				if c == WALL {
+					fmt.Print("X")
+				} else {
+					fmt.Print("x")
+				}
+			} else {
+				fmt.Print(string(c))
+			}
+			if (i+1)%w == 0 {
+				fmt.Println()
+			}
+		}
+	*/
 	distances = makeDistances(maps, h, w) // compute distances matrix
 
 	for i := 0; i < Q; i++ { // load questions
